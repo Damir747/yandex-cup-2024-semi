@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Magellan's Journey</title>
+	<style>
+		body {
+			margin: 0;
+			height: 10000px;
+			background-color: #f3f3f3;
+			overflow-y: scroll;
+			position: relative;
+		}
+
+		.sea {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: auto;
+			background: url('/c-example/statement/assets/waves.svg') no-repeat center center;
+		}
+
+		.ship {
+			position: fixed;
+			bottom: 200px;
+			width: 100px;
+			/* Задайте ширину вашего изображения корабля */
+			height: auto;
+			background: url('/c-example/statement/assets/ship.svg') no-repeat center center;
+			background-size: contain;
+			transition: left 0.1s linear;
+		}
+
+		/* Определите позиции для корабля в зависимости от прокрутки */
+		@keyframes moveShip {
+			0% {
+				left: 0;
+			}
+
+			50% {
+				left: 50%;
+			}
+
+			100% {
+				left: 100%;
+			}
+		}
+
+		/* Корабль будет двигаться с различными ключевыми кадрами */
+		@media screen and (max-height: 720px) {
+			.ship {
+				animation: moveShip 10s linear forwards;
+			}
+		}
+
+		@media screen and (min-height: 720px) {
+			.ship {
+				animation: moveShip 15s linear forwards;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div class="sea"></div>
+	<div class="ship"></div>
+</body>
+
+</html>

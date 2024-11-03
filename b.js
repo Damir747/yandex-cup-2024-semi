@@ -1,13 +1,8 @@
 const makePreparation = (artefactAgesHistogram, periodDuration) => {
+	// Подсчитываем общее количество артефактов и их возраст
 	const artefactsCount = artefactAgesHistogram.reduce((sum, count) => sum + count, 0);
-	const allArtefactAgeDuration = artefactAgesHistogram.reduce(
-		(sum, count, age) => sum + count * age,
-		0
-	);
-
 	return {
 		artefactsCount,
-		allArtefactAgeDuration,
 		maxDuration: periodDuration,
 	};
 };
@@ -17,29 +12,34 @@ const seekPeriodIndicies = (analyseArtefact, startIndex, options) => {
 	const maxDuration = options.maxDuration;
 
 	// Массив для хранения результатов анализа
-	const results = new Array(artefactsCount);
-	for (let i = 0; i < artefactsCount; i++) {
-		results[i] = analyseArtefact(i);
-	}
-
+	const results = [];
 	let endIndex = startIndex;
-	let { start: startAge } = results[startIndex];
-	let actualDuration = 0;
 
-	while (endIndex < artefactsCount) {
-		const { start, end } = results[endIndex];
-		actualDuration = end - startAge;
+	// Получаем начальный возраст для первого артефакта
+	if (startIndex < artefactsCount) {
+		const firstArtefact = analyseArtefact(startIndex);
+		let startAge = firstArtefact.start;
 
-		if (actualDuration > maxDuration) {
-			break; // Ранний выход из цикла
+		let actualDuration = 0;
+
+		// Обрабатываем артефакты, пока не достигнем конца
+		while (endIndex < artefactsCount) {
+			const currentArtefact = analyseArtefact(endIndex);
+			actualDuration = currentArtefact.end - startAge;
+
+			if (actualDuration > maxDuration) {
+				break; // Выходим, если превысили максимальную длительность
+			}
+			endIndex++;
 		}
-		endIndex++;
+
+		endIndex--; // Возвращаемся на один шаг назад, чтобы соответствовать длительности
+		actualDuration = analyseArtefact(endIndex).end - startAge;
+
+		return [startIndex, endIndex, actualDuration];
 	}
 
-	endIndex--; // Возвращаемся на один шаг назад, чтобы соответствовать длительности
-	actualDuration = results[endIndex].end - startAge;
-
-	return [startIndex, endIndex, actualDuration];
+	return [startIndex, startIndex, 0]; // Если нет артефактов
 };
 
 module.exports = {

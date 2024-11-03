@@ -1,99 +1,101 @@
 function solution() {
-	class BuilderApi {
-		constructor() {
-			this.context = [];
-			this.history = []; // Хранит историю контекстов для previousContext
-		}
+	const api = {
+		context: [],
+		contextStack: [],
 
 		root(selector) {
 			this.context = Array.from(document.querySelectorAll(selector));
-			this.history.push(this.context);
+			this.contextStack.push(this.context);
 			return this;
-		}
+		},
 
 		append(tag, attrs = {}) {
-			const newElements = [];
 			this.context.forEach(el => {
-				const newEl = document.createElement(tag);
-				for (const [key, value] of Object.entries(attrs)) {
+				const newElement = document.createElement(tag);
+				for (let key in attrs) {
 					if (key === 'content') {
-						newEl.textContent = value;
+						newElement.textContent = attrs[key];
 					} else {
-						newEl.setAttribute(key, value);
+						newElement.setAttribute(key, attrs[key]);
 					}
 				}
-				el.appendChild(newEl);
-				newElements.push(newEl);
+				el.appendChild(newElement);
 			});
-			this.context = newElements; // Обновляем контекст на созданные элементы
 			return this;
-		}
+		},
 
 		appendMany(count, tag, attrs) {
-			const newElements = [];
 			this.context.forEach(el => {
 				for (let i = 0; i < count; i++) {
-					const newAttrs = typeof attrs === 'function' ? attrs(i) : attrs;
-					const newEl = document.createElement(tag);
-					for (const [key, value] of Object.entries(newAttrs)) {
+					const newElement = document.createElement(tag);
+					const attributes = typeof attrs === 'function' ? attrs(i) : attrs;
+					for (let key in attributes) {
 						if (key === 'content') {
-							newEl.textContent = value;
+							newElement.textContent = attributes[key];
 						} else {
-							newEl.setAttribute(key, value);
+							newElement.setAttribute(key, attributes[key]);
 						}
 					}
-					el.appendChild(newEl);
-					newElements.push(newEl);
-				}
-			});
-			this.context = newElements; // Обновляем контекст на созданные элементы
-			return this;
-		}
-
-		css(styles) {
-			this.context.forEach(el => {
-				for (const [key, value] of Object.entries(styles)) {
-					el.style[key] = value;
+					el.appendChild(newElement);
 				}
 			});
 			return this;
-		}
+		},
 
-		children(selector) {
-			this.context = this.context.flatMap(el => Array.from(el.children));
-			if (selector) {
-				this.context = this.context.filter(el => el.matches(selector));
+		css(property, value) {
+			if (typeof property === 'string') {
+				this.context.forEach(el => {
+					el.style[property] = value;
+				});
+			} else if (typeof property === 'object') {
+				this.context.forEach(el => {
+					for (let key in property) {
+						el.style[key] = property[key];
+					}
+				});
 			}
 			return this;
-		}
+		},
+
+		children(selector) {
+			this.context = this.context.flatMap(el =>
+				selector ? Array.from(el.children).filter(child => child.matches(selector)) : Array.from(el.children)
+			);
+			this.contextStack.push(this.context);
+			return this;
+		},
 
 		select(selector) {
 			this.context = this.context.flatMap(el => Array.from(el.querySelectorAll(selector)));
+			this.contextStack.push(this.context);
 			return this;
-		}
+		},
 
 		previousContext(steps = 1) {
-			if (steps > 0 && steps <= this.history.length - 1) {
-				this.context = this.history[this.history.length - 1 - steps];
-			} else if (steps >= this.history.length) {
-				this.context = this.history[0]; // Установить на самый первый контекст
+			if (steps > 0 && this.contextStack.length > steps) {
+				this.contextStack = this.contextStack.slice(0, -steps);
+				this.context = this.contextStack[this.contextStack.length - 1];
 			}
 			return this;
-		}
+		},
 
 		remove(selector) {
 			this.context.forEach(el => {
-				const elementsToRemove = selector ? el.querySelectorAll(selector) : el.children;
-				elementsToRemove.forEach(child => child.remove());
+				if (selector) {
+					const toRemove = el.querySelectorAll(selector);
+					toRemove.forEach(child => child.remove());
+				} else {
+					el.remove();
+				}
 			});
 			return this;
-		}
+		},
 
 		commit() {
-			this.context = []; // Сбросить контекст после выполнения
-			return this;
+			// Блокируем дальнейшие вызовы
+			return null; // или undefined
 		}
-	}
+	};
 
-	return new BuilderApi(); // Возвращаем экземпляр класса
+	return api;
 }
